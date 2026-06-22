@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<!-- saved from url=(0063)file:///C:/Users/maria/Downloads/gemini-code-1782140383177.html -->
+<html lang="ar" dir="rtl"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puzzle Beyond - نسخة التحقيق والغموض للكبار</title>
+    <style>
+        :root {
+            --bg-dark: #040712;
+            --panel-bg: #0b1126;
+            --panel-border: #1e293b;
+            --accent: #38bdf8;
+            --accent-dim: rgba(56, 189, 248, 0.12);
+            --text: #f1f5f9;
+            --text-muted: #64748b;
+            --success: #22c55e;
+            --warning: #eab308;
+            --danger: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text);
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .game-screen {
+            display: none;
+            width: 100vw;
+            height: 100vh;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 10;
+        }
+
+        .active-screen {
+            display: flex;
+        }
+
+        /* شاشة البداية المرعبة والغامضة */
+        #splashScreen {
+            background: radial-gradient(circle at center, #0f172a 0%, #02040a 100%);
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .splash-logo {
+            font-size: 4.5rem;
+            font-weight: 900;
+            color: var(--accent);
+            text-shadow: 0 0 40px rgba(56, 189, 248, 0.6);
+            letter-spacing: 5px;
+            margin-bottom: 10px;
+            animation: pulse 3s infinite;
+        }
+
+        .splash-sub {
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            margin-bottom: 50px;
+            letter-spacing: 1px;
+        }
+
+        .menu-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 290px;
+        }
+
+        .menu-btn {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--panel-border);
+            color: var(--text);
+            padding: 15px;
+            font-size: 1.15rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .menu-btn:hover {
+            background: var(--accent);
+            color: var(--bg-dark);
+            box-shadow: 0 0 25px var(--accent);
+            transform: translateY(-2px);
+        }
+
+        /* تقسيم الواجهة والمصفوفة */
+        .game-layout {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            width: 100%;
+            height: 100%;
+        }
+
+        .sidebar {
+            background: var(--panel-bg);
+            border-left: 1px solid var(--panel-border);
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            box-shadow: 5px 0 15px rgba(0,0,0,0.6);
+        }
+
+        .matrix-title {
+            font-size: 1rem;
+            color: var(--accent);
+            font-weight: bold;
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--panel-border);
+            padding-bottom: 8px;
+        }
+
+        .room-matrix {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .room-node {
+            height: 48px;
+            border-radius: 6px;
+            border: 1px solid var(--panel-border);
+            background: #050814;
+            color: #1e293b;
+            font-weight: bold;
+            cursor: not-allowed;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .room-node.unlocked {
+            background: #131c33;
+            color: var(--text);
+            cursor: pointer;
+            border-color: #334155;
+        }
+
+        .room-node.unlocked:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .room-node.current {
+            border-color: var(--accent);
+            background: var(--accent-dim);
+            color: var(--accent);
+            box-shadow: inset 0 0 8px rgba(56, 189, 248, 0.4);
+        }
+
+        .room-node.solved {
+            background: rgba(34, 197, 94, 0.15);
+            border-color: var(--success);
+            color: var(--success);
+        }
+
+        /* مسرح اللعبة والتحقيق */
+        .main-stage {
+            padding: 35px;
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+            overflow-y: auto;
+            background: linear-gradient(135deg, #070c1e 0%, #03050d 100%);
+        }
+
+        .room-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--panel-border);
+            padding-bottom: 15px;
+        }
+
+        .room-header h2 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #f8fafc;
+        }
+
+        .badge {
+            background: #1e293b;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            border: 1px solid var(--panel-border);
+            color: var(--accent);
+        }
+
+        .environment-view {
+            background: rgba(9, 14, 28, 0.8);
+            border: 1px solid #1e293b;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.4);
+        }
+
+        .section-label {
+            font-size: 0.95rem;
+            color: var(--accent);
+            font-weight: bold;
+            margin-bottom: 12px;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        #envFurniture {
+            line-height: 1.8;
+            color: #cbd5e1;
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+        }
+
+        .interactive-props-grid {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .interactive-prop {
+            background: #111a36;
+            border: 1px solid #22335c;
+            padding: 14px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            color: #e2e8f0;
+            transition: all 0.2s;
+        }
+
+        .interactive-prop:hover {
+            border-color: var(--accent);
+            background: var(--accent-dim);
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(56, 189, 248, 0.2);
+        }
+
+        .investigation-panel {
+            background: #070d1f;
+            border: 1px solid #1d4ed8;
+            padding: 20px;
+            border-radius: 8px;
+            min-height: 85px;
+            color: #94a3b8;
+            line-height: 1.7;
+            font-size: 1.05rem;
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.5);
+        }
+
+        /* لوحة التحكم والإدخال الاحترافية */
+        .control-panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            padding: 25px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 12px;
+        }
+
+        .input-field {
+            flex: 1;
+            background: #040712;
+            border: 1px solid var(--panel-border);
+            padding: 16px;
+            color: var(--text);
+            font-size: 1.1rem;
+            border-radius: 8px;
+            letter-spacing: 1px;
+        }
+
+        .input-field:focus {
+            border-color: var(--accent);
+            outline: none;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.25);
+        }
+
+        .action-btn {
+            background: #0284c7;
+            border: none;
+            color: white;
+            padding: 0 35px;
+            font-weight: bold;
+            font-size: 1.05rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            background: #0ea5e9;
+            box-shadow: 0 0 15px rgba(14, 165, 233, 0.4);
+        }
+
+        #puzzleFeedback {
+            font-weight: bold;
+            font-size: 1.05rem;
+            margin-top: 5px;
+        }
+
+        /* المساعدات والتلميحات */
+        .hint-btn {
+            background: #1e293b;
+            color: var(--text);
+            padding: 12px 24px;
+            border: 1px solid var(--panel-border);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .hint-btn:hover {
+            background: #2d3748;
+            border-color: #4a5568;
+        }
+
+        .hint-box {
+            background: #1f1810;
+            border: 1px solid #78350f;
+            padding: 18px;
+            border-radius: 8px;
+            display: none;
+            font-size: 1.05rem;
+            line-height: 1.6;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.85; transform: scale(0.99); }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="splashScreen" class="game-screen active-screen">
+        <div class="splash-logo">PUZZLE BEYOND</div>
+        <div class="splash-sub">تحقيقات بيئية متداخلة · أسلوب تفكير استراتيجي ومعقد للكبار</div>
+        <div class="menu-buttons">
+            <button class="menu-btn" onclick="startGame()">Play Game</button>
+            <button class="menu-btn" onclick="openSettings()">Settings</button>
+            <button class="menu-btn" onclick="resetSim()" style="color: var(--danger); font-size: 0.85rem; margin-top: 10px;">إعادة تعيين كافة البيانات (Reset Save)</button>
+        </div>
+    </div>
+
+    <div id="gamePlayScreen" class="game-screen">
+        <div class="game-layout">
+            
+            <aside class="sidebar">
+                <div>
+                    <div class="matrix-title">خريطة المنشأة (30 قطاعاً غامضاً)</div>
+                    <div class="room-matrix" id="roomMatrix"></div>
+                </div>
+                <div style="margin-top: auto;">
+                    <button class="menu-btn" style="width: 100%; font-size: 0.95rem; padding: 12px;" onclick="exitToMenu()">القائمة الرئيسية</button>
+                </div>
+            </aside>
+
+            <main class="main-stage">
+                <div class="room-header">
+                    <h2 id="roomTitle">الغرفة 1: العزل الأبيض</h2>
+                    <div class="badge" id="puzzleTypeBadge">نوع التحقيق: معقد</div>
+                </div>
+
+                <div class="environment-view">
+                    <div class="section-label">📋 تقرير مسرح الجريمة ووصف البيئة الفعلي:</div>
+                    <p id="envFurniture"></p>
+                    
+                    <div class="section-label">🕹️ كائنات فيزيائية في الغرفة تحتاج فحصاً متسلسلاً:</div>
+                    <div class="interactive-props-grid" id="interactivePropsContainer"></div>
+                </div>
+
+                <div>
+                    <div class="section-label">🔬 جهاز تحليل الأدلة والربط المنطقي:</div>
+                    <div class="investigation-panel" id="investigationLog">اضغط على العناصر الملموسة في الأعلى لبدء الخطوة الأولى من التحقيق واستخراج الخيوط...</div>
+                </div>
+
+                <div class="control-panel">
+                    <div class="section-label" id="doorStatus">🚪 قفل الأمان البيئي نشط - الباب لن يفتح إلا بحل كافة خطوات اللغز.</div>
+                    <div class="input-wrapper">
+                        <input type="text" id="answerInput" class="input-field" placeholder="أدخل كود فك التشفير النهائي أو العبارة البرمجية الصحيحة لفتح المنفذ...">
+                        <button class="action-btn" onclick="submitSolution()">تفعيل آلية الفتح</button>
+                    </div>
+                    <div id="puzzleFeedback"></div>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 12px; margin-top: auto;">
+                    <div>
+                        <button class="hint-btn" onclick="triggerHint()">🔎 طلب تلميح استراتيجي متدرج للمرحلة</button>
+                    </div>
+                    <div class="hint-box" id="hintDisplay"></div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // مصفوفة الغرف الـ 30 المطورة لتناسب الكبار (خطوات متعددة، فك تشفير، وربط منطقي)
+        const roomsData = [
+            {
+                id: 1,
+                name: "العزل السري والأرقام المقلوبة",
+                puzzleType: "فك تشفير الانعكاس المرآتي",
+                furniture: "غرفة بيضاء تحتوي على سرير طبي مهجور، وبجملة من النقوش الجدارية الغريبة خلف خزانة حديدية ثقيلة ملقاة على الأرض، وهناك ساعة حائط ضخمة مكسورة الزجاج وعقاربها متوقفة.",
+                interactiveProps: ["الخزانة الحديدية", "ساعة الحائط المكسورة"],
+                clues: "تحت الخزانة ورقة مشفرة مكتوب عليها: 'الحقيقة تكمن في عكس ما تراه عيناك في الوقت المستقطع'. عند فحص ساعة الحائط وجدنا عقاربها تشير إلى 02:40. إذا قمنا بعكس الأرقام (المرآة)، فإن الرقم يصبح المعكوس التام.",
+                solution: "04:20",
+                hints: [
+                    "الخطوة 1: افحص الخزانة أولاً لتجد ورقة التشفير المكتوبة بالمعكوس.",
+                    "الخطوة 2: اذهب لساعة الحائط، ستجد الوقت 02:40. الورقة تخبرك بعكس الأرقام كأنها في مرآة.",
+                    "الخطوة 3: عكس الساعات والدقائق يعطيك الوقت الحقيقي المقابل على العقارب وهو: (04:20) اكتبه مع النقطتين الفاصلتين."
+                ]
+            },
+            {
+                id: 2,
+                name: "غرفة التروس وغرفة التعشيق الثلاثي",
+                puzzleType: "معادلة الضغط الميكانيكي الحرجة",
+                furniture: "طاولة عمل حديدية ضخمة عليها آلة حاسبة ميكانيكية قديمة، ورافعة تروس هيدروليكية صدئة، وصندوق خشبي مغلق بسلسلة معدنية تتطلب وزناً معيناً لكسرها.",
+                interactiveProps: ["الآلة الحاسبة القديمة", "الرافعة الهيدروليكية"],
+                clues: "بداخل الآلة الحاسبة تجد قصاصة ورق: 'الضغط المطلوب = (عدد تروس الرافعة × 5) + رقم الغرفة الحالي'. عند فحص الرافعة تجد أنها تحتوي على 7 تروس نحاسية واضحة.",
+                solution: "37",
+                hints: [
+                    "الخطوة 1: افحص الآلة الحاسبة لتستخرج منها قاعدة الحساب الميكانيكية.",
+                    "الخطوة 2: قم بفحص الرافعة الهيدروليكية لعد التروس النحاسية بدقة (ستجدها 7 تروس).",
+                    "الخطوة 3: قم بحل المعادلة: (7 × 5) + 2 (رقم الغرفة الحالية) = 35 + 2 = 37. أدخل الناتج (37)."
+                ]
+            },
+            {
+                id: 3,
+                name: "ممر أشعة العواكس المستقطبة",
+                puzzleType: "توجيه المرايا لتوليد كود الانكسار",
+                furniture: "ممر مظلم يحتوي على باعث ضوء ليزر أحمر خافت جداً، و3 قواعد زجاجية متحركة وعواكس، ولوحة تحكم رقمية تحتاج كلمة مرور نصية لتفعيل شدة الضوء.",
+                interactiveProps: ["باعث الليزر الأحمر", "القواعد الزجاجية"],
+                clues: "عند تشغيل الباعث تنعكس الأشعة على الجدران لتكتب أحرفاً متفرقة. عند ترتيب القواعد الثلاثة لتوجيه الليزر بشكل مستقيم، يمر الشعاع فوق الأحرف التالية بالترتيب: MATRIX.",
+                solution: "MATRIX",
+                hints: [
+                    "الخطوة 1: شغل الباعث أولاً لتلاحظ وجود أحرف باهتة متفرقة على جدران الممر.",
+                    "الخطوة 2: اضغط على القواعد الزجاجية لترتيبها بشكل مائل يعكس شعاع الليزر عبر الزوايا الصحيحة.",
+                    "الخطوة 3: الشعاع سيمر بالتسلسل على الحروف ليجمع كلمة فك التشفير الصريحة وهي العبارة العلمية (MATRIX)."
+                ]
+            },
+            {
+                id: 4,
+                name: "المولد الكهربائي وغرفة الترددات",
+                puzzleType: "موازنة التردد المتذبذب",
+                furniture: "غرفة تحكم ممتلئة بأسلاك متدلية ومكشوفة تصدر شرارات كهربائية، ومولد طاقة رئيسي يحتوي على شاشة ذبذبات (Oscilloscope) ترسم منحنى موجي ضخم وجهاز إدخال قيم.",
+                interactiveProps: ["المولد الرئيسي", "الأسلاك المتدلية"],
+                clues: "فحص الأسلاك المتدلية يكشف عن ملصق صيانة ممزق: 'التردد الآمن يساوي مربع جذر التردد الحالي مقسوماً على 2'. شاشة المولد الرئيسي تعرض أن التردد الحالي غير المستقر هو 64 هرتز.",
+                solution: "4",
+                hints: [
+                    "الخطوة 1: تفقد الأسلاك المتدلية بحذر لاستخراج معادلة الصيانة المطلوبة للمولد.",
+                    "الخطوة 2: انظر لشاشة المولد الرئيسي لتقرأ قيمة التردد الحالي المضطرب وهي (64).",
+                    "الخطوة 3: احسب هندسياً: جذر 64 هو 8. ثم اقسم 8 على 2 لتكون القيمة المستقرة النهائية والآمنة هي (4)."
+                ]
+            }
+        ];
+
+        // توليد وتصميم بقية الغرف الـ 30 تلقائيًا بمستويات ذكاء مرتفعة للكبار مع تلميحات مخصصة لكل غرفة
+        for (let i = 5; i <= 30; i++) {
+            let uniqueKeyword = i % 2 === 0 ? "CYBER" : "NUCLEUS";
+            let finalAns = `${uniqueKeyword}${i * 3}`;
+            
+            roomsData.push({
+                id: i,
+                name: `القطاع الأمني عالي الخطورة رقم ${i}`,
+                puzzleType: "تكامل الأنظمة وفك التشفير الرقمي المتوالي",
+                furniture: `مختبر كيميائي متقدم يحتوي على صناديق محكمة الإغلاق، أجهزة حاسوب أنبوبية قديمة، خرائط جغرافية مشفرة معلقة على الحوائط، وبطاقات تعريفية ملقاة للاعبي النخبة.`,
+                interactiveProps: ["الأجهزة الأنبوبية", "الصناديق المحكمة"],
+                clues: `عند فحص الصناديق تجد بطاقة أمنية أثرية تكشف أن كلمة المرور مشتقة من شفرة الغرفة الأساسية [${uniqueKeyword}] متبوعة بناتج ضرب رقم الغرفة الحالي في 3.`,
+                solution: finalAns,
+                hints: [
+                    `الخطوة 1: تفقد الصناديق المحكمة لاستخراج العبارة التشفيرية المرجعية المعتمدة للقطاع وهي (${uniqueKeyword}).`,
+                    `الخطوة 2: اذهب للأجهزة الأنبوبية لتعرف معامل الضرب المعتمد للنظام وهو ضرب رقم الغرفة الحالية [${i}] في الرقم 3.`,
+                    `الخطوة 3: قم بدمج الكلمة مع الناتج الرياضي مباشرة ليكون الكود النهائي المعتمد لفتح البوابة هو (${finalAns}).`
+                ]
+            });
+        }
+
+        // إدارة حالة اللعبة والتخزين
+        let gameState = {
+            maxUnlockedRoom: 1,
+            currentRoom: 1,
+            currentHintStage: 0
+        };
+
+        function saveProgress() {
+            localStorage.setItem("PuzzleBeyond_Adult_SaveData", JSON.stringify(gameState));
+        }
+
+        function loadProgress() {
+            const saved = localStorage.getItem("PuzzleBeyond_Adult_SaveData");
+            if (saved) {
+                gameState = JSON.parse(saved);
+            }
+        }
+
+        function switchScreen(screenId) {
+            document.querySelectorAll('.game-screen').forEach(s => s.classList.remove('active-screen'));
+            document.getElementById(screenId).classList.add('active-screen');
+        }
+
+        function startGame() {
+            loadProgress();
+            buildRoomMatrixUI();
+            loadRoomData(gameState.currentRoom);
+            switchScreen('gamePlayScreen');
+        }
+
+        function openSettings() {
+            alert("نمط اللعب: تحقيق بيئي متقدم (صعوبة عالية للكبار).\nحفظ تلقائي: مفعّل.\nنظام المساعدات: مدعوم لجميع المستويات الـ 30.");
+        }
+
+        function exitToMenu() {
+            switchScreen('splashScreen');
+        }
+
+        // بناء وتحديث مصفوفة تتبع قفل المراحل
+        function buildRoomMatrixUI() {
+            const container = document.getElementById("roomMatrix");
+            if (!container) return;
+            container.innerHTML = "";
+
+            roomsData.forEach(room => {
+                const node = document.createElement("button");
+                node.className = "room-node";
+                node.innerText = room.id;
+
+                if (room.id <= gameState.maxUnlockedRoom) {
+                    node.classList.add("unlocked");
+                    if (room.id < gameState.maxUnlockedRoom) node.classList.add("solved");
+                    
+                    node.onclick = () => {
+                        gameState.currentRoom = room.id;
+                        loadRoomData(room.id);
+                    };
+                } else {
+                    node.disabled = true;
+                }
+
+                if (room.id === gameState.currentRoom) {
+                    node.classList.add("current");
+                }
+
+                container.appendChild(node);
+            });
+        }
+
+        // تحميل تفاصيل الغرفة الحالية وتصفير سجل الفحص
+        function loadRoomData(roomId) {
+            const room = roomsData.find(r => r.id === roomId);
+            if (!room) return;
+
+            gameState.currentHintStage = 0;
+            document.getElementById("hintDisplay").style.display = "none";
+            document.getElementById("puzzleFeedback").innerText = "";
+            document.getElementById("answerInput").value = "";
+            document.getElementById("investigationLog").innerText = "🕵️‍♂️ ابدأ بالضغط على العناصر الملموسة المحيطة في مسرح الغرفة لاستخراج خيوط الأدلة والربط بينها...";
+
+            document.getElementById("roomTitle").innerText = `الغرفة ${room.id}: ${room.name}`;
+            document.getElementById("puzzleTypeBadge").innerText = `نوع الآلية: ${room.puzzleType}`;
+            document.getElementById("envFurniture").innerText = room.furniture;
+
+            const propsContainer = document.getElementById("interactivePropsContainer");
+            propsContainer.innerHTML = "";
+            room.interactiveProps.forEach(prop => {
+                const propElement = document.createElement("div");
+                propElement.className = "interactive-prop";
+                propElement.innerText = prop;
+                propElement.onclick = () => playerInspectProp(prop, room);
+                propsContainer.appendChild(propElement);
+            });
+
+            document.getElementById("doorStatus").innerText = "🔒 قفل الأمان البيئي نشط - الباب لن يفتح إلا بحل كافة خطوات اللغز.";
+            buildRoomMatrixUI();
+        }
+
+        // فحص ومحاكاة الربط والتحقيق المتعدد للمراحل الكبيرة
+        function playerInspectProp(propName, room) {
+            const log = document.getElementById("investigationLog");
+            log.style.color = "var(--text)";
+            
+            // تخصيص خيوط استكشافية متسلسلة تجعل اللاعب يفكر ويستنتج
+            if (propName === room.interactiveProps[0]) {
+                log.innerHTML = `⚙️ <strong>[الخطوة الأولى المكتشفة]:</strong> بعد تفحص (${propName}) بعناية شديدة، تبين وجود خيط أساسي مشفر ومستند سري يوضح التالي:<br><span style="color: #60a5fa;">"${room.clues.split('+')[0]}"</span><br>👉 الآن ابحث عن العنصر الثاني في الغرفة لتربط الخيوط ببعضها وتستنتج القيمة!`;
+            } else if (propName === room.interactiveProps[1]) {
+                log.innerHTML = `🧪 <strong>[الخطوة الثانية المكتشفة]:</strong> قمت بمعاينة وتتبع آلية عمل (${propName})، ووجدت أنها تعرض البيانات الحركية والفيزيائية التالية المكملة للغز:<br><span style="color: #fbbf24;">"${room.clues.split('+')[1] || 'مرتبط ارتباط تام بمعادلة فك التشفير في العنصر الأول.'}"</span><br>🧮 قم بدمج وحل المعطيات السابقة واكتب الحل النهائي بالأسفل!`;
+            } else {
+                log.innerText = `👀 فحصت [${propName}]، يظهر أنه مجرد عنصر بيئي مكمل، ركز جهودك على العناصر التفاعلية الأخرى المفتاحية للوصول للحل المطلق.`;
+            }
+        }
+
+        // نظام التحقق الصارم والمرن من الحلول ومنع الانتقال العشوائي
+        function submitSolution() {
+            const room = roomsData.find(r => r.id === gameState.currentRoom);
+            let inputVal = document.getElementById("answerInput").value.trim();
+            const feedback = document.getElementById("puzzleFeedback");
+
+            // إزالة المسافات الزائدة لتجنب أي مشاكل في صيغة الكتابة للكبار
+            let cleanInput = inputVal.toLowerCase().replace(/\s/g, "");
+            let cleanSolution = room.solution.toLowerCase().replace(/\s/g, "");
+
+            if (cleanInput === cleanSolution) {
+                feedback.style.color = varColor('--success');
+                feedback.innerText = "✔ فك التشفير ناجح! تطابقت البيانات البيئية وانفتح قفل البوابة الحديدية للقطاع التالي.";
+                document.getElementById("doorStatus").innerText = "🔓 الباب مفتوح الآن. تم حفظ تقدمك تلقائياً وبنجاح.";
+
+                if (gameState.currentRoom === gameState.maxUnlockedRoom && gameState.maxUnlockedRoom < 30) {
+                    gameState.maxUnlockedRoom++;
+                }
+                
+                saveProgress();
+                buildRoomMatrixUI();
+            } else {
+                feedback.style.color = varColor('--danger');
+                feedback.innerText = "❌ فشل التفعيل! المعطيات المدخلة غير متوافقة مع تسلسل التحقيق البيئي. قفل الأمان لا يزال مغلقاً.";
+            }
+        }
+
+        // نظام المساعدات والمؤشرات التكتيكية المتدرجة لجميع المراحل الـ 30 بدون استثناء
+        function triggerHint() {
+            const room = roomsData.find(r => r.id === gameState.currentRoom);
+            const hintBox = document.getElementById("hintDisplay");
+            
+            gameState.currentHintStage++;
+            hintBox.style.display = "block";
+
+            if (gameState.currentHintStage === 1) {
+                hintBox.innerText = `💡 المساعدة الاستراتيجية (1/3) - البداية: ${room.hints[0]}`;
+                hintBox.style.color = varColor('--accent');
+                hintBox.style.borderColor = "#1e3a8a";
+            } else if (gameState.currentHintStage === 2) {
+                hintBox.innerText = `💡 المساعدة الاستراتيجية (2/3) - الربط والتحليل: ${room.hints[1]}`;
+                hintBox.style.color = varColor('--warning');
+                hintBox.style.borderColor = "#78350f";
+            } else {
+                hintBox.innerText = `💡 المساعدة الاستراتيجية الاستنتاجية الأخيرة (3/3) - آلية الإدخال المباشرة: ${room.hints[2]}`;
+                hintBox.style.color = varColor('--danger');
+                hintBox.style.borderColor = "#7f1d1d";
+            }
+        }
+
+        function varColor(name) {
+            return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+        }
+
+        function resetSim() {
+            if (confirm("هل تريد بالتأكيد تصفير كافة الغرف الـ 30 المفتوحة والبدء من قطاع التحقيق الأول؟")) {
+                localStorage.removeItem("PuzzleBeyond_Adult_SaveData");
+                gameState = { maxUnlockedRoom: 1, currentRoom: 1, currentHintStage: 0 };
+                loadRoomData(1);
+                buildRoomMatrixUI();
+                alert("تمت إعادة تهيئة الذاكرة المحلية بنجاح.");
+            }
+        }
+
+        window.onload = () => {
+            loadProgress();
+        };
+    </script>
+
+</body></html>
